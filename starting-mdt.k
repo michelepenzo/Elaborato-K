@@ -8,34 +8,42 @@
 module MDT-SYNTAX
 
 	/*
-	 * TM states 
+	 * TM states, lista degli stati della mdt
 	 */
 	syntax States ::= List{Int, ","}
 
 	/*
-	 * TM Final state declaration
+	 * TM Final state declaration, stato finale (solamente 1)
 	 */
 	syntax FinalState ::= "Final" ":" Int
 	
 	/*
-	 * TM Initial state declaration
+	 * TM Initial state declaration, stato iniziale (solamente 1)
 	 */
 	syntax InitialState ::= "Initial" ":" Int
 
+	/*
+	 * Configurazione del movimento della testina, left right or nothing 
+	 */ 
 	syntax Movement ::= "L" | "R" | "-"
 
 	/*
-	 * TM Transitions declaration
+	 * TM Transitions declaration, definizione della transizione. Inoltre una transizione è definita come due transizioni
+	 *
+	 * stato corrente , simbolo di input, stato successivo, simbolo di output, SPOSTAMENTO
+	 *
 	 */
 	syntax Transition ::= "(" Int "," String "," Int "," String "," Movement ")"
 						|	Transition Transition
 
 	/*
-	 * Initial tape declaration
+	 * Initial tape declaration, definizione del nastro, ovvero tutte le sequenze di simboli che deve eseguire
 	 */
 	syntax InitialTape ::= List{String, ","}
 
-
+	/*
+	 * Un programma è cosi definito, con le seguenti definizioni
+	 */
 	syntax Program ::= States FinalState InitialState Transition InitialTape
 
 endmodule
