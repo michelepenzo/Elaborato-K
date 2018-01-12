@@ -27,6 +27,10 @@ module MDT-SYNTAX
 	 */ 
 	syntax Movement ::= "L" | "R" | "-"
 
+
+
+    //syntax EXEC ::= "esecuzione"
+
 	/*
 	 * TM Transitions declaration, definizione della transizione. Inoltre una transizione è definita come due transizioni
 	 *
@@ -34,7 +38,7 @@ module MDT-SYNTAX
 	 *
 	 */
 	syntax Transition ::= "(" Int "," String "," Int "," String "," Movement ")"
-						|	Transition Transition 
+							|	Transition Transition
 						/* transizione 'concatenata' ad un altra transizione --> come devono essere scritte le transizioni*/
 
 	/*
@@ -78,14 +82,13 @@ module MDT
 	/*
 	 * ~> indica l'ordine di valutazione
 	 */
-	rule SI:States F:FinalState I:InitialState TT:Transition Tape:InitialTape 
+	rule SI:States F:FinalState I:InitialState TT:Transition Tape:InitialTape
 		=> SI ~> F ~> I ~> TT ~> Tape [structural]
-	
+
 	/*
 	 * valuta l'ordine delle transizioni, una transizione può essere concatenata da un'altra transizione
 	 */
 	rule T1:Transition T2:Transition => T1 ~> T2 [structural]
-
 
 	/*
 	 * Q e Qs 'appartengono' entrambi a States
@@ -96,9 +99,37 @@ module MDT
 
 	rule <k> .States => .K ... </k>
 
-	rule <k> (Final: I1:Int => .K) </k>
-	 <final-state>  .K => I1 </final-state> 
-	
+    /*
+    leggo finalstate da Program, lo "svuoto" e inserisco in <finalstate> il valore letto
+    */
+	rule <k> (Final: I1:Int => .K) ...  </k>
+	 <final-state> _ => I1 </final-state>
+
+    /*
+    stessa cosa per initialstate
+    */
+	rule <k> (Initial: I1:Int => .K) ...  </k>
+     	<initial-state> _ => I1 </initial-state>
+     	<current-state> _ => I1 </current-state>
+
+
+    rule <k> ... ( C, Crs:InitialTape => Crs ) ... </k>
+	    <tape> Tape:Map => Tape[P <- C] </tape>
+        <current-position> P:Int => P +Int 1 </current-position>
+
+
+    rule <k> ... ((I:Int, C:String, I2:Int, C2:String, M:Movement)) => "esecuzione" ... </k>
+        <transitions> Trs:Map => Trs[(I, C) <- (I2, C2, M)] </transitions>
+
+    rule <k> ... .InitialTape => .K ... </k>
+         <current-position> _ => 0 </current-position>
+
+    rule <k>  "esecuzione" => .K ... </k>
+         <transitions> ... (Cs, In) |-> (Next:Int, Out:String, M:Movement) ... </transitions>
+         <current-position> Cp:Int => Cp +Int 1 </current-position>
+         <current-state> Cs:Int => Next </current-state>
+         <tape> ... Cp |-> (In:String => Out) </tape>
+
 
 	/*
 	 * Equals with tape chars
