@@ -1,9 +1,8 @@
 /*
-
-	Elaborato K-FRAMEWORK per il corso di LINGUAGGI - UniVR
-
+ *
+ * 	Elaborato K-FRAMEWORK per il corso di LINGUAGGI - UniVR
+ *
  */
-
 
 module MDT-SYNTAX
 
@@ -27,10 +26,6 @@ module MDT-SYNTAX
 	 */ 
 	syntax Movement ::= "L" | "R" | "-"
 
-
-
-    //syntax EXEC ::= "esecuzione"
-
 	/*
 	 * TM Transitions declaration, definizione della transizione. Inoltre una transizione è definita come due transizioni
 	 *
@@ -38,8 +33,7 @@ module MDT-SYNTAX
 	 *
 	 */
 	syntax Transition ::= "(" Int "," String "," Int "," String "," Movement ")"
-							|	Transition Transition
-						/* transizione 'concatenata' ad un altra transizione --> come devono essere scritte le transizioni*/
+							|	Transition Transition							// transizione concatenata ad un altra
 
 	/*
 	 * Initial tape declaration, definizione del nastro, ovvero tutte le sequenze di simboli che deve eseguire
@@ -75,7 +69,7 @@ module MDT
 		<current-position> 0 </current-position>
 		<transitions> .Map </transitions>
 		<states> .Set </states>
-		<final-state> 0 </final-state>				/* messi a zero per inizializzare il valore dello stato iniziale */
+		<final-state> 0 </final-state>				/* messi a zero per inizializzare il valore dello stato iniziale e finale */
 		<initial-state> 0 </initial-state>
 	</T>
 
@@ -100,35 +94,61 @@ module MDT
 	rule <k> .States => .K ... </k>
 
     /*
-    leggo finalstate da Program, lo "svuoto" e inserisco in <finalstate> il valore letto
-    */
+     * leggo finalstate da Program, lo "svuoto" e inserisco in <finalstate> il valore letto
+     */
 	rule <k> (Final: I1:Int => .K) ...  </k>
 	 <final-state> _ => I1 </final-state>
 
     /*
-    stessa cosa per initialstate
-    */
+     * Inizializzazione dello stato iniziale e dello stato corrente 
+     */
 	rule <k> (Initial: I1:Int => .K) ...  </k>
      	<initial-state> _ => I1 </initial-state>
      	<current-state> _ => I1 </current-state>
 
-
+	/*
+	 * Caricamento nella mappa dei valori del nastro, ed aumento del valore della posizione corrente
+	 * che viene associata come chiave al valore del nastro
+	 */
     rule <k> ... ( C, Crs:InitialTape => Crs ) ... </k>
 	    <tape> Tape:Map => Tape[P <- C] </tape>
         <current-position> P:Int => P +Int 1 </current-position>
 
-
+	/*
+	 * Vengono poi caricate tutte le transizioni all'interno di una mappa apposita, quando viene caricata
+	 * una transizione viene 'scritto' il valore "esecuzione" che identifica, per ogni sua scrittura,
+	 * quante sono le transizioni che devono essere eseguite.
+	 * Le chiavi delle transizioni sono come sopra definite, nella sintassi di K, come anche il valore che
+	 * viene salvato
+	 */
     rule <k> ... ((I:Int, C:String, I2:Int, C2:String, M:Movement)) => "esecuzione" ... </k>
         <transitions> Trs:Map => Trs[(I, C) <- (I2, C2, M)] </transitions>
 
+	/*
+	 * Dopo che il nastro è stato completamente 'letto' il valore della posizione corrente viene inizializzato
+	 * a 0, questo indica che si può iniziare cone l'esecuzione delle transizioni
+	 */
     rule <k> ... .InitialTape => .K ... </k>
          <current-position> _ => 0 </current-position>
 
-    rule <k>  "esecuzione" => .K ... </k>
+	/*
+	 * Esecuzione delle transizioni, in questo caso vengono eseguite le transizioni con il movimento verso destra,
+	 * quindi la posizione correte deve essere aumentata di 1 e lo stato deve essere quello che è stato letto 
+	 * dalla transizione in mapppa
+	 */
+    rule <k> "esecuzione" => .K ... </k>
          <transitions> ... (Cs, In) |-> (Next:Int, Out:String, M:Movement) ... </transitions>
          <current-position> Cp:Int => Cp +Int 1 </current-position>
          <current-state> Cs:Int => Next </current-state>
          <tape> ... Cp |-> (In:String => Out) </tape>
+
+	/*
+	 * TODO :
+	 		 transizioni S
+			 transizioni -
+			 input simbolo *
+	 */
+
 
 
 	/*
