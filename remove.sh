@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###### INSERISCI QUI SOTTO IL NOME DELLA CARTELLA E SALVA ######
-dir=""
+dir="mdt-kompiled"
 
 if [[ ${#dir} -eq 0 ]]
     then 
