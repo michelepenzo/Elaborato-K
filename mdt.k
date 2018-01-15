@@ -15,15 +15,15 @@ module MDT-SYNTAX
 	 * TM Final state declaration, stato finale (solamente 1)
 	 */
 	syntax FinalState ::= "Final" ":" Int
-	
+
 	/*
 	 * TM Initial state declaration, stato iniziale (solamente 1)
 	 */
 	syntax InitialState ::= "Initial" ":" Int
 
 	/*
-	 * Configurazione del movimento della testina, left right or nothing 
-	 */ 
+	 * Configurazione del movimento della testina, left right or nothing
+	 */
 	syntax Movement ::= "L" | "R" | "-"
 
 	/*
@@ -55,13 +55,13 @@ module MDT
 	 * transitions-configuration map key
 	 */
 	syntax K ::= "(" Int "," String ")"
-	
+
 	/*
 	 * transitions-configuration map value
 	 */
 	syntax K ::= "(" Int "," String "," Movement ")"
 
-	configuration 
+	configuration
 	<T>
 		<k> $PGM:Program </k>
 		<tape> .Map </tape>
@@ -88,8 +88,8 @@ module MDT
 	 * Q e Qs 'appartengono' entrambi a States
 	 * Q è lo stato attuale, mentre Qs è lo stato prossimo
 	 */
-	rule <k> ( Q, Qs:States => Qs ) ... </k> 		// 1 2 3 4 5 
-		 <states> S:Set => S SetItem(Q) </states> 
+	rule <k> ( Q, Qs:States => Qs ) ... </k> 		// 1 2 3 4 5
+		 <states> S:Set => S SetItem(Q) </states>
 
 	rule <k> .States => .K ... </k>
 
@@ -100,7 +100,7 @@ module MDT
 	 <final-state> _ => I1 </final-state>
 
     /*
-     * Inizializzazione dello stato iniziale e dello stato corrente 
+     * Inizializzazione dello stato iniziale e dello stato corrente
      */
 	rule <k> (Initial: I1:Int => .K) ...  </k>
      	<initial-state> _ => I1 </initial-state>
@@ -131,32 +131,85 @@ module MDT
     rule <k> ... .InitialTape => .K ... </k>
          <current-position> _ => 0 </current-position>
 
+//Per RIGHT
 	/*
 	 * Esecuzione delle transizioni, in questo caso vengono eseguite le transizioni con il movimento verso destra,
-	 * quindi la posizione correte deve essere aumentata di 1 e lo stato deve essere quello che è stato letto 
+	 * quindi la posizione correte deve essere aumentata di 1 e lo stato deve essere quello che è stato letto
 	 * dalla transizione in mapppa
 	 */
     rule <k> "esecuzione" => .K ... </k>
-         <transitions> ... (Cs, In) |-> (Next:Int, Out:String, M:Movement) ... </transitions>
+         <transitions> ... (Cs, In) |-> (Next:Int, Out:String, R ) ... </transitions>
          <current-position> Cp:Int => Cp +Int 1 </current-position>
          <current-state> Cs:Int => Next </current-state>
          <tape> ... Cp |-> (In:String => Out) </tape>
+         when ( In =/=String "*" )
 
-	/*
-	 * TODO :
-	 		 transizioni S
-			 transizioni -
-			 input simbolo *
-	 */
+    rule <k> "esecuzione" => .K ... </k>
+        <transitions> ... (Cs, "*") |-> (Next:Int, Out:String, R ) ... </transitions>
+        <current-position> Cp:Int => Cp +Int 1 </current-position>
+        <current-state> Cs:Int => Next </current-state>
+        <tape> ... Cp |-> (In:String => Out) </tape>
+        when ( In ==TapeChar "*" )
+
+    rule <k> "esecuzione" => .K ... </k>
+        <transitions> ... (Cs, _:String) |-> (Next:Int, Out:String, R ) ... </transitions>
+        <current-position> Cp:Int => Cp +Int 1 </current-position>
+        <current-state> Cs:Int => Next </current-state>
+        <tape> ... Cp |-> (In:String => Out) </tape>
+        when ( "*" ==TapeChar In )
+
+//Per LEFT
+    rule <k> "esecuzione" => .K ... </k>
+         <transitions> ... (Cs, In) |-> (Next:Int, Out:String, L ) ... </transitions>
+         <current-position> Cp:Int => Cp -Int 1 </current-position>
+         <current-state> Cs:Int => Next </current-state>
+         <tape> ... Cp |-> (In:String => Out) </tape>
+         when ( In =/=String "*" )
+
+    rule <k> "esecuzione" => .K ... </k>
+        <transitions> ... (Cs, "*") |-> (Next:Int, Out:String, L ) ... </transitions>
+        <current-position> Cp:Int => Cp -Int 1 </current-position>
+        <current-state> Cs:Int => Next </current-state>
+        <tape> ... Cp |-> (In:String => Out) </tape>
+        when ( In ==TapeChar "*" )
+
+    rule <k> "esecuzione" => .K ... </k>
+        <transitions> ... (Cs, _:String) |-> (Next:Int, Out:String, L ) ... </transitions>
+        <current-position> Cp:Int => Cp -Int 1 </current-position>
+        <current-state> Cs:Int => Next </current-state>
+        <tape> ... Cp |-> (In:String => Out) </tape>
+        when ( "*" ==TapeChar In )
+
+//Per -
+   rule <k> "esecuzione" => .K ... </k>
+            <transitions> ... (Cs, In) |-> (Next:Int, Out:String, - ) ... </transitions>
+            <current-position> Cp:Int </current-position>
+            <current-state> Cs:Int => Next </current-state>
+            <tape> ... Cp |-> (In:String => Out) </tape>
+            when ( In =/=String "*" )
+
+       rule <k> "esecuzione" => .K ... </k>
+           <transitions> ... (Cs, "*") |-> (Next:Int, Out:String, - ) ... </transitions>
+           <current-position> Cp:Int </current-position>
+           <current-state> Cs:Int => Next </current-state>
+           <tape> ... Cp |-> (In:String => Out) </tape>
+           when ( In ==TapeChar "*" )
+
+       rule <k> "esecuzione" => .K ... </k>
+           <transitions> ... (Cs, _:String) |-> (Next:Int, Out:String, - ) ... </transitions>
+           <current-position> Cp:Int </current-position>
+           <current-state> Cs:Int => Next </current-state>
+           <tape> ... Cp |-> (In:String => Out) </tape>
+           when ( "*" ==TapeChar In )
 
 
-
-	/*
+    /*
 	 * Equals with tape chars
 	 */
 	syntax Bool ::= K "==TapeChar" K [function]
 	rule "*" ==TapeChar S:String => true
 	rule S:String ==TapeChar "*" => true
 	rule S1:String ==TapeChar S2:String => S1 ==String S2 when S1 =/=String "*" andBool S2 =/=String "*"
+
 
 endmodule
