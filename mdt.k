@@ -34,8 +34,9 @@ module MDT-SYNTAX
 	 * stato corrente , simbolo di input, stato successivo, simbolo di output, SPOSTAMENTO
 	 *
 	 */
+	
 	syntax Transition ::= "(" Int "," String "," Int "," String "," Movement ")"
-							|	Transition Transition							// transizione concatenata ad un altra
+						| Transition Transition [left]							// transizione concatenata ad un altra
 
 	/*
 	 * Initial tape declaration, definizione del nastro, ovvero tutte le sequenze di simboli che deve eseguire
@@ -221,4 +222,14 @@ module MDT
 	rule S:String ==TapeChar "*" => true
 	rule S1:String ==TapeChar S2:String => S1 ==String S2 when S1 =/=String "*" andBool S2 =/=String "*"
 	
+	/*
+	*	TODO
+	*		- controllare che gli stati iniziali e finale appartengano agli stati
+	*		- controllare che i valori inseriti sul nastro siano solamente dei caratteri e non delle stringhe
+	*		- controllare cosa succede con una transizione a SX
+	*		- controllare che gli stati che vengono dati in input e output sulla transizione siano appartenenti agli stati 
+	 */
+
+
+
 endmodule
