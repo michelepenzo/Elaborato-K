@@ -34,7 +34,6 @@ module MDT-SYNTAX
 	 * stato corrente , simbolo di input, stato successivo, simbolo di output, SPOSTAMENTO
 	 *
 	 */
-	
 	syntax Transition ::= "(" Int "," String "," Int "," String "," Movement ")"
 						| Transition Transition [left]							// transizione concatenata ad un altra
 
@@ -91,13 +90,15 @@ module MDT
 	 * Q e Qs 'appartengono' entrambi a States
 	 * Q è lo stato attuale, mentre Qs è lo stato prossimo
 	 */
-	rule <k> ( Q, Qs:States => Qs ) ... </k> 		// 1 2 3 4 5
+	rule <k> ( Q, Qs:States => Qs ) ... </k> 
 		 <states> S:Set => S SetItem(Q) </states>
 
 	rule <k> .States => .K ... </k>
 
     /*
-     * leggo finalstate da Program, lo "svuoto" e inserisco in <finalstate> il valore letto
+	 * Lettura dello stato finale, e viene messo il .K per dire che non c'è altro da leggere.
+	 * Viene effettuato il controllo dove lo stato finale deve appartenere agli stati inseriti
+	 * all'inizio del file.
      */
 	rule <k> (Final: I1:Int => .K) ...  </k>
 		<final-state> _ => I1 </final-state>
@@ -106,6 +107,7 @@ module MDT
 
     /*
      * Inizializzazione dello stato iniziale e dello stato corrente
+	 * Lo stato iniziale deve appartenere agli stati inseriti all'inizio del file.
      */
 	rule <k> (Initial: I1:Int => .K) ...  </k>
      	<initial-state> _ => I1 </initial-state>
@@ -117,6 +119,9 @@ module MDT
 	/*
 	 * Caricamento nella mappa dei valori del nastro, ed aumento del valore della posizione corrente
 	 * che viene associata come chiave al valore del nastro
+	 * 
+	 * Viene inoltre effettuato il controllo sulla lunghezza dei caratteri, devono essere caratteri
+	 * e non delle stringhe
 	 */
     rule <k> ... ( C, Crs:InitialTape => Crs ) ... </k>
 	    <tape> Tape:Map => Tape[P <- C] </tape>
@@ -128,7 +133,11 @@ module MDT
 	 * una transizione viene 'scritto' il valore "esecuzione" che identifica, per ogni sua scrittura,
 	 * quante sono le transizioni che devono essere eseguite.
 	 * Le chiavi delle transizioni sono come sopra definite, nella sintassi di K, come anche il valore che
-	 * viene salvato
+	 * viene salvato.
+	 *
+	 * Vengono effettuati dei controlli, nel caso in cui gli stati sulla transizione appartengano agli stati
+	 * definiti all'inizio del file, e che il carattere in input e quello in output siano effettivamente dei
+	 * caratteri e non delle stringhe.
 	 */
 	rule <k> ... ((I:Int, C:String, I2:Int, C2:String, M:Movement)) => .K ... </k>
         <transitions> Trs:Map => Trs[(I, C) <- (I2, C2, M)] </transitions>
@@ -162,7 +171,7 @@ module MDT
 			<tape> ... Cp |-> (In:String => Out) </tape>
 			when ( In =/=String "*" )
 	
-	//fuori nastro RIGHT
+		// fuori nastro RIGHT
 		rule <k> .K </k>
 			<transitions> ... (Cs,"*") |-> (Next:Int, Out:String, R ) ... </transitions>
 			<current-position> Cp:Int => Cp +Int 1 </current-position>
@@ -193,7 +202,7 @@ module MDT
 			<tape> ... Cp |-> (In:String => Out) </tape>
 			when ( In =/=String "*" )
 
-		//fuori nastro LEFT
+		// fuori nastro LEFT
 		rule <k> .K </k>
 			<transitions> ... (Cs,"*") |-> (Next:Int, Out:String, L ) ... </transitions>
 			<current-position> Cp:Int => Cp -Int 1 </current-position>
@@ -223,7 +232,7 @@ module MDT
 				<tape> ... Cp |-> (In:String => Out) </tape>
 				when ( In =/=String "*" )
 
-		//fuori nastro -
+		// fuori nastro -
 		rule <k> .K </k>
 			<transitions> ... (Cs,"*") |-> (Next:Int, Out:String, - ) ... </transitions>
 			<current-position> Cp:Int </current-position>
@@ -253,15 +262,5 @@ module MDT
 	rule "*" ==TapeChar S:String => true
 	rule S:String ==TapeChar "*" => true
 	rule S1:String ==TapeChar S2:String => S1 ==String S2 when S1 =/=String "*" andBool S2 =/=String "*"
-	
-	/*
-	*	TODO
-	*		- controllare che gli stati iniziali e finale appartengano agli stati   											V
-	*		- controllare che i valori inseriti sul nastro siano solamente dei caratteri e non delle stringhe 					V
-	*		- controllare che gli stati che vengono dati in input e output sulla transizione siano appartenenti agli stati 		V
-	*		- quando termino controllo se stato corrente = stato finale															NON SERVE
-	 */
-
-
 
 endmodule
