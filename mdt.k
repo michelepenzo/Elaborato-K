@@ -161,6 +161,8 @@ module MDT
 	 *							nella configurazione della tranzione
 	 *							oppure che non ci sia.
 	 *
+	 * Viene inoltre inserito il controllo nel caso in cui ci si trovi al di fuori del nastro e si ottiene una
+	 * transizione; viene ripetuto per ogni valore R L -
 	 */
 
 	// Per RIGHT
