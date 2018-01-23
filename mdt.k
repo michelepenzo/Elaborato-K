@@ -100,7 +100,9 @@ module MDT
      * leggo finalstate da Program, lo "svuoto" e inserisco in <finalstate> il valore letto
      */
 	rule <k> (Final: I1:Int => .K) ...  </k>
-	 <final-state> _ => I1 </final-state>
+		<final-state> _ => I1 </final-state>
+	 	<states> S:Set </states>
+	 	when (I1 in S)
 
     /*
      * Inizializzazione dello stato iniziale e dello stato corrente
@@ -108,6 +110,9 @@ module MDT
 	rule <k> (Initial: I1:Int => .K) ...  </k>
      	<initial-state> _ => I1 </initial-state>
      	<current-state> _ => I1 </current-state>
+		<states> S:Set </states>
+	 	when (I1 in S)
+		
 
 	/*
 	 * Caricamento nella mappa dei valori del nastro, ed aumento del valore della posizione corrente
@@ -116,6 +121,7 @@ module MDT
     rule <k> ... ( C, Crs:InitialTape => Crs ) ... </k>
 	    <tape> Tape:Map => Tape[P <- C] </tape>
         <current-position> P:Int => P +Int 1 </current-position>
+		when (lengthString(C) ==Int 1)
 
 	/*
 	 * Vengono poi caricate tutte le transizioni all'interno di una mappa apposita, quando viene caricata
@@ -124,8 +130,10 @@ module MDT
 	 * Le chiavi delle transizioni sono come sopra definite, nella sintassi di K, come anche il valore che
 	 * viene salvato
 	 */
-    rule <k> ... ((I:Int, C:String, I2:Int, C2:String, M:Movement)) => "esecuzione" ... </k>
+	rule <k> ... ((I:Int, C:String, I2:Int, C2:String, M:Movement)) => .K ... </k>
         <transitions> Trs:Map => Trs[(I, C) <- (I2, C2, M)] </transitions>
+		<states> S:Set </states>
+	 	when ((I in S) andBool (I2 in S) andBool (lengthString(C) ==Int 1) andBool (lengthString(C2) ==Int 1))
 
 	/*
 	 * Dopo che il nastro è stato completamente 'letto' il valore della posizione corrente viene inizializzato
@@ -133,7 +141,6 @@ module MDT
 	 */
     rule <k> ... .InitialTape => .K ... </k>
          <current-position> _ => 0 </current-position>
-
 
 	/*
 	 * Esecuzione delle transizioni, in questo caso vengono eseguite le transizioni con il movimento verso destra,
@@ -148,21 +155,30 @@ module MDT
 	 */
 
 	// Per RIGHT
-		rule <k> "esecuzione" => .K ... </k>
+		rule <k> .K </k>
 			<transitions> ... (Cs, In) |-> (Next:Int, Out:String, R ) ... </transitions>
 			<current-position> Cp:Int => Cp +Int 1 </current-position>
 			<current-state> Cs:Int => Next </current-state>
 			<tape> ... Cp |-> (In:String => Out) </tape>
 			when ( In =/=String "*" )
+	
+	//fuori nastro RIGHT
+		rule <k> .K </k>
+			<transitions> ... (Cs,"*") |-> (Next:Int, Out:String, R ) ... </transitions>
+			<current-position> Cp:Int => Cp +Int 1 </current-position>
+			<current-state> Cs:Int => Next </current-state>
+			<tape> Tape:Map => Tape[Cp <- Out] </tape>
+			when (notBool(Cp in keys(?Tape)))
 
-		rule <k> "esecuzione" => .K ... </k>
+
+		rule <k> .K </k>
 			<transitions> ... (Cs, "*") |-> (Next:Int, Out:String, R ) ... </transitions>
 			<current-position> Cp:Int => Cp +Int 1 </current-position>
 			<current-state> Cs:Int => Next </current-state>
 			<tape> ... Cp |-> (In:String => Out) </tape>
 			when ( In ==TapeChar "*" )
 
-		rule <k> "esecuzione" => .K ... </k>
+		rule <k> .K </k>
 			<transitions> ... (Cs, _:String) |-> (Next:Int, Out:String, R ) ... </transitions>
 			<current-position> Cp:Int => Cp +Int 1 </current-position>
 			<current-state> Cs:Int => Next </current-state>
@@ -170,21 +186,29 @@ module MDT
 			when ( "*" ==TapeChar In )
 
 	// Per LEFT
-		rule <k> "esecuzione" => .K ... </k>
+		rule <k> .K </k>
 			<transitions> ... (Cs, In) |-> (Next:Int, Out:String, L ) ... </transitions>
 			<current-position> Cp:Int => Cp -Int 1 </current-position>
 			<current-state> Cs:Int => Next </current-state>
 			<tape> ... Cp |-> (In:String => Out) </tape>
 			when ( In =/=String "*" )
 
-		rule <k> "esecuzione" => .K ... </k>
+		//fuori nastro LEFT
+		rule <k> .K </k>
+			<transitions> ... (Cs,"*") |-> (Next:Int, Out:String, L ) ... </transitions>
+			<current-position> Cp:Int => Cp -Int 1 </current-position>
+			<current-state> Cs:Int => Next </current-state>
+			<tape> Tape:Map => Tape[Cp <- Out] </tape>
+			when (notBool(Cp in keys(?Tape)))
+
+		rule <k> .K </k>
 			<transitions> ... (Cs, "*") |-> (Next:Int, Out:String, L ) ... </transitions>
 			<current-position> Cp:Int => Cp -Int 1 </current-position>
 			<current-state> Cs:Int => Next </current-state>
 			<tape> ... Cp |-> (In:String => Out) </tape>
 			when ( In ==TapeChar "*" )
 
-		rule <k> "esecuzione" => .K ... </k>
+		rule <k> .K </k>
 			<transitions> ... (Cs, _:String) |-> (Next:Int, Out:String, L ) ... </transitions>
 			<current-position> Cp:Int => Cp -Int 1 </current-position>
 			<current-state> Cs:Int => Next </current-state>
@@ -192,21 +216,29 @@ module MDT
 			when ( "*" ==TapeChar In )
 
 	// Per -
-	rule <k> "esecuzione" => .K ... </k>
+		rule <k> .K </k>
 				<transitions> ... (Cs, In) |-> (Next:Int, Out:String, - ) ... </transitions>
 				<current-position> Cp:Int </current-position>
 				<current-state> Cs:Int => Next </current-state>
 				<tape> ... Cp |-> (In:String => Out) </tape>
 				when ( In =/=String "*" )
 
-		rule <k> "esecuzione" => .K ... </k>
+		//fuori nastro -
+		rule <k> .K </k>
+			<transitions> ... (Cs,"*") |-> (Next:Int, Out:String, - ) ... </transitions>
+			<current-position> Cp:Int </current-position>
+			<current-state> Cs:Int => Next </current-state>
+			<tape> Tape:Map => Tape[Cp <- Out] </tape>
+			when (notBool(Cp in keys(?Tape)))
+
+		rule <k> .K </k>
 			<transitions> ... (Cs, "*") |-> (Next:Int, Out:String, - ) ... </transitions>
 			<current-position> Cp:Int </current-position>
 			<current-state> Cs:Int => Next </current-state>
 			<tape> ... Cp |-> (In:String => Out) </tape>
 			when ( In ==TapeChar "*" )
 
-		rule <k> "esecuzione" => .K ... </k>
+		rule <k> .K </k>
 			<transitions> ... (Cs, _:String) |-> (Next:Int, Out:String, - ) ... </transitions>
 			<current-position> Cp:Int </current-position>
 			<current-state> Cs:Int => Next </current-state>
@@ -224,10 +256,10 @@ module MDT
 	
 	/*
 	*	TODO
-	*		- controllare che gli stati iniziali e finale appartengano agli stati
-	*		- controllare che i valori inseriti sul nastro siano solamente dei caratteri e non delle stringhe
-	*		- controllare cosa succede con una transizione a SX
-	*		- controllare che gli stati che vengono dati in input e output sulla transizione siano appartenenti agli stati 
+	*		- controllare che gli stati iniziali e finale appartengano agli stati   											V
+	*		- controllare che i valori inseriti sul nastro siano solamente dei caratteri e non delle stringhe 					V
+	*		- controllare che gli stati che vengono dati in input e output sulla transizione siano appartenenti agli stati 		V
+	*		- quando termino controllo se stato corrente = stato finale															NON SERVE
 	 */
 
 
