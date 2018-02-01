@@ -10,3 +10,7 @@ Elaborato in K Framework per il corso di Linguaggi - UniVR
 
 ## File di configurazione
     All'interno della cartella si trovano tre semplici file di configurazione :
+        
+        * file1
+        * file2 
+        * file3
