@@ -9,8 +9,8 @@ kompile mdt.k && krun name_of_file.mdt
         
         
 
-## File di configurazione
+## File di prova inviati
 
-* file1
-* file2 
-* file3
+* example_1.mdt riconosce stringhe con aaa 
+* example_2.mdt converte 0 in 1 e viceversa
+* example_3.mdt somma 1 a un numero binario
